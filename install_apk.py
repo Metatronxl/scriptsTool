@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Time : 2019-03-27
 # @Author : lei.X
+# python2.7
 
 
 # TODO 添加日志系统

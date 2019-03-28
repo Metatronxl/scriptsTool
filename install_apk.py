@@ -4,6 +4,9 @@
 # @Author : lei.X
 
 
+# TODO 添加日志系统
+
+
 from multiprocessing import Pool
 import os
 import sys
@@ -25,7 +28,7 @@ def run_shell():
         print "download error"
 
     #开始并发安装apk文件
-    install_all_apk("~/Desktop/preInstall.apk")
+    install_all_apk("~/Desktop/preInstall.apk",sys.argv[2])
 
 
 

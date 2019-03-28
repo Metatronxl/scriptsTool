@@ -1,0 +1,4 @@
+2019-03-28 20:07:03,049 - lei.X_logging - INFO - test info log
+2019-03-28 20:07:03,049 - lei.X_logging - ERROR - test error log
+2019-03-28 20:07:20,418 - lei.X - INFO - test info log
+2019-03-28 20:07:20,418 - lei.X - ERROR - test error log

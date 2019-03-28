@@ -6,27 +6,31 @@
 
 
 # TODO 添加日志系统
-
-
+import random
+import string
 from multiprocessing import Pool
 import os
 import sys
 import subprocess
 import time
+from config import Config
+import logging
 
 cur_path = os.getcwd()
 is_shell = True
-
-
 reinstallFlag = 1
+
+
+conf = Config()
+logger = conf.getLog()
 
 
 def run_shell():
     print "脚本名：", sys.argv[0]
     if downloadApkFile(sys.argv[1]) == 0:
-        print "download success!"
+        logger.info("download success!")
     else:
-        print "download error"
+        logger.info("download error")
 
     #开始并发安装apk文件
     install_all_apk("~/Desktop/preInstall.apk",sys.argv[2])
@@ -58,13 +62,14 @@ def get_devicenum():
 # 获取最新的apk文件
 def downloadApkFile(apkAddr):
     print "start download newest apk file"
+    file_name = "preInstall_".join(random.sample(string.ascii_letters + string.digits, 8))
     abd_proc = subprocess.Popen("curl -w  downloadApk -o ~/Desktop/preInstall.apk -O "+apkAddr, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     print abd_proc
     (__output,__error) = abd_proc.communicate()
     if __output and __output.find("downloadApk") != -1:
-        print "download apk file successfully"
+        logger.info( "download apk file successfully")
         return 0
-    print "download apk file unsuccessfully"
+    logger.error("download apk file unsuccessfully")
     return 1
 
 # 卸载旧apk文件,安装新apk文件
@@ -73,35 +78,35 @@ def install_apk(device_num, apk_file,old_apk_file):
     # 卸载旧apk文件
     global reinstallFlag
     try:
-        print "device %s start uninstalling %s" % (device_num, old_apk_file)
+        logger.info("device %s start uninstalling %s" % (device_num, old_apk_file))
         adb_proc = subprocess.Popen("adb -s " + device_num + " uninstall " + old_apk_file, stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         (__output, __error) = adb_proc.communicate()
         if __output and __output.find("Success") != -1:
-            print "device: %s uninstall %s successfully" % (device_num,old_apk_file)
+            logger.info("device: %s uninstall %s successfully" % (device_num,old_apk_file))
     except Exception as e :
-        print "uninstall App error ，reason：doesn't exist such app："+ e.message
+        logger.warn("uninstall App error ，reason：doesn't exist such app："+ e.message)
 
     # 安装新apk文件
     try:
-        print "device %s start installing %s"  % (device_num,apk_file)
+        logger.info("device %s start installing %s"  % (device_num,apk_file))
         adb_proc = subprocess.Popen("adb -s "+device_num+" install "+ apk_file, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         (__output, __error) = adb_proc.communicate()
         if __output and __output.find("Success") != -1:
-            print "device: %s install successfully" % device_num
+            logger.info("device: %s install successfully" % device_num)
             return 0
-        print "device: %s install unsuccessfully" % device_num
+        logger.error("device: %s install unsuccessfully" % device_num)
         # flag重置为1
         reinstallFlag = 1
         return 1
     except Exception as e:
-        print "error message："+ e.message
+        logger.error("error message："+ e.message)
         reinstallFlag +=1
         if  reinstallFlag < 4:
             time.sleep(5)
-            print "reinstall app : (%s) times" % reinstallFlag
+            logger.warn("reinstall app : (%s) times" % reinstallFlag)
             install_apk(device_num,apk_file,old_apk_file)
-        print "can't install apk file , process done :("
+        logger.error("can't install apk file , process done :(")
 
 
 
@@ -110,16 +115,48 @@ def install_all_apk(apk_file,old_apk_file):
     p = Pool()
     for device_num in device_list:
         p.apply_async(install_apk,args=(device_num,apk_file,old_apk_file,))
-    print "Waiting for all subprocess done..."
+    logger.info("Waiting for all subprocess done...")
     p.close()
     p.join()
-    print 'All subprocesses done.'
+    logger.info("All subprocesses done.")
+
+# 日志模块
+class Config():
+    # 创建一个logger
+    logger = logging.getLogger('lei.X')
+    logger.setLevel(logging.INFO)
+
+    # 创建一个handler，用于写入日志文件
+    fh = logging.FileHandler('output.log')
+    fh.setLevel(logging.DEBUG)
+
+    # 再创建一个handler，用于输出到控制台
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # 定义handler的输出格式
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+
+    # 给logger添加handler
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    def getLog(self):
+        return self.logger
+
+
+
+
+def test():
+    salt = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+    print salt
 
 
 if __name__ == '__main__':
     # run_shell()
-
+    test()
     #开始并发安装apk文件
-    install_all_apk("~/Desktop/preInstall.apk","com.dianping.v1")
-
+    # install_all_apk("~/Desktop/preInstall.apk","com.dianping.v1")
 

@@ -5,7 +5,6 @@
 # python2.7
 
 
-# TODO 添加日志系统
 import random
 import string
 from multiprocessing import Pool
@@ -62,7 +61,6 @@ def get_devicenum():
 # 获取最新的apk文件
 def downloadApkFile(apkAddr):
     print "start download newest apk file"
-    file_name = "preInstall_".join(random.sample(string.ascii_letters + string.digits, 8))
     abd_proc = subprocess.Popen("curl -w  downloadApk -o ~/Desktop/preInstall.apk -O "+apkAddr, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     print abd_proc
     (__output,__error) = abd_proc.communicate()
@@ -155,8 +153,8 @@ def test():
 
 
 if __name__ == '__main__':
-    # run_shell()
-    test()
+    run_shell()
+
     #开始并发安装apk文件
     # install_all_apk("~/Desktop/preInstall.apk","com.dianping.v1")
 
